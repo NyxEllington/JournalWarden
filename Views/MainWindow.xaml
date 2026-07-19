@@ -1,0 +1,265 @@
+<Window x:Class="JournalWarden.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:JournalWarden.ViewModels"
+        xmlns:behaviors="clr-namespace:JournalWarden.Behaviors"
+        Title="Journal Warden - Elite Dangerous Event Monitor" 
+        Height="700" Width="1400"
+        WindowStartupLocation="CenterScreen">
+    
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#1E1E1E" Padding="10">
+            <StackPanel>
+                <TextBlock Text="JOURNAL WARDEN" FontSize="24" FontWeight="Bold" 
+                           Foreground="#FF8800" HorizontalAlignment="Center"/>
+                <TextBlock Text="Elite Dangerous Event Monitor &amp; Development Tool" 
+                           FontSize="12" Foreground="#999" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Controls -->
+        <Border Grid.Row="1" Background="#2D2D30" Padding="10" BorderBrush="#3E3E42" BorderThickness="0,1">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="Journal Path:" VerticalAlignment="Center" 
+                               Foreground="White" Margin="0,0,10,0"/>
+                    
+                    <TextBox Grid.Column="1" Text="{Binding JournalPath, UpdateSourceTrigger=PropertyChanged}" 
+                             Margin="0,0,10,0" Padding="5" Background="#3E3E42" Foreground="White" 
+                             BorderBrush="#555"/>
+
+                    <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowseFolderCommand}" 
+                            Margin="0,0,10,0" Padding="10,5" Background="#0E639C" Foreground="White" 
+                            BorderBrush="#007ACC"/>
+
+                    <Button Grid.Column="3" Margin="0,0,10,0" Padding="10,5" 
+                            Background="#0E639C" Foreground="White" BorderBrush="#007ACC">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Content" Value="Start Monitoring"/>
+                                <Setter Property="Command" Value="{Binding StartMonitoringCommand}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMonitoring}" Value="True">
+                                        <Setter Property="Content" Value="Stop Monitoring"/>
+                                        <Setter Property="Command" Value="{Binding StopMonitoringCommand}"/>
+                                        <Setter Property="Background" Value="#D13438"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Grid.Column="4" Content="Clear" Command="{Binding ClearEventsCommand}" 
+                            Padding="10,5" Background="#555" Foreground="White" BorderBrush="#666"/>
+                </Grid>
+                
+                <!-- Auto-select checkbox -->
+                <CheckBox Content="Auto-select latest event" 
+                          IsChecked="{Binding AutoSelectLatest}"
+                          Foreground="White" 
+                          Margin="0,8,0,0"
+                          ToolTip="Automatically select and display the most recent event"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="2" Background="#1E1E1E">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Event Type Filter Panel -->
+            <Border Grid.Column="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="EVENT FILTERS" FontWeight="Bold" FontSize="12" 
+                               Foreground="#FF8800" Margin="10,10,10,5" />
+
+                    <StackPanel Grid.Row="1" Margin="10,0,10,5">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                            <Button Content="All" Command="{Binding ShowAllEventTypesCommand}" 
+                                    Padding="5,3" FontSize="10" Background="#0E639C" 
+                                    Foreground="White" BorderBrush="#007ACC" Margin="0,0,5,0"
+                                    ToolTip="Show all event types"/>
+                            <Button Content="None" Command="{Binding HideAllEventTypesCommand}" 
+                                    Padding="5,3" FontSize="10" Background="#555" 
+                                    Foreground="White" BorderBrush="#666"
+                                    ToolTip="Hide all event types"/>
+                        </StackPanel>
+                        <Button Content="Hide Noise" Command="{Binding HideNoiseEventsCommand}" 
+                                Padding="5,3" FontSize="10" Background="#D13438" 
+                                Foreground="White" BorderBrush="#A00"
+                                ToolTip="Hide Music, Friends, Status, and other noise events"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    
+                    <TextBlock Grid.Row="2" Text="Check to show:" FontSize="9" 
+                               Foreground="#999" Margin="10,0,10,5" />
+
+                    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding EventTypeFilters}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsVisible}" 
+                                              Foreground="White" Margin="10,2"
+                                              FontSize="11">
+                                        <CheckBox.Content>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding EventName}" 
+                                                           Foreground="#4EC9B0" 
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Count, StringFormat=' ({0})'}" 
+                                                           Foreground="#666" 
+                                                           FontSize="9"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </CheckBox.Content>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" 
+                          Background="#3E3E42" ShowsPreview="True"/>
+
+            <!-- Event List -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="EVENTS" FontWeight="Bold" FontSize="14" 
+                           Foreground="#FF8800" Margin="10" />
+
+                <Grid Grid.Row="1" Margin="10,0,10,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" Text="🔍" FontSize="16" VerticalAlignment="Center" 
+                               Margin="0,0,5,0" Foreground="#999"/>
+                    <TextBox Grid.Column="1" Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}" 
+                             Background="#2D2D30" Foreground="White" BorderBrush="#3E3E42" 
+                             Padding="5" FontSize="12" 
+                             ToolTip="Filter events by type or content"/>
+                </Grid>
+
+                <ListBox Grid.Row="2" ItemsSource="{Binding FilteredEvents}" 
+                         SelectedItem="{Binding SelectedEvent}"
+                         behaviors:ListBoxAutoScrollBehavior.AutoScrollToSelectedItem="True"
+                         Background="#252526" Foreground="White" BorderBrush="#3E3E42"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.CanContentScroll="True"
+                         IsSynchronizedWithCurrentItem="True"
+                         Margin="10,0,10,10">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="#3E3E42" BorderThickness="0,0,0,1" Padding="5">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Event}" FontWeight="Bold" 
+                                               Foreground="#4EC9B0" FontSize="12"/>
+                                    <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" 
+                                               Foreground="#999" FontSize="10"/>
+                                    <TextBlock Text="{Binding FileName}" Foreground="#666" FontSize="9"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" 
+                          Background="#3E3E42" ShowsPreview="True"/>
+
+            <!-- Event Details -->
+            <Grid Grid.Column="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="EVENT DETAILS" FontWeight="Bold" FontSize="14" 
+                           Foreground="#FF8800" Margin="10" />
+
+                <ScrollViewer Grid.Row="1" Margin="10,0,10,10" VerticalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding SelectedEvent.FormattedJson, Mode=OneWay}" 
+                             Background="#1E1E1E" Foreground="#CE9178" 
+                             BorderBrush="#3E3E42" BorderThickness="1"
+                             IsReadOnly="True" TextWrapping="Wrap" 
+                             FontFamily="Consolas" FontSize="11" Padding="10"
+                             VerticalScrollBarVisibility="Auto"/>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" Background="#007ACC" Padding="8,5" BorderBrush="#005A9E" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" 
+                           Foreground="White" FontWeight="Medium"/>
+                
+                <TextBlock Grid.Column="1" Margin="20,0,20,0" Foreground="White">
+                    <Run Text="Filtered: "/>
+                    <Run Text="{Binding FilteredEventsCount, Mode=OneWay}" FontWeight="Bold"/>
+                    <Run Text=" / "/>
+                    <Run Text="{Binding TotalEvents, Mode=OneWay}" FontWeight="Bold"/>
+                </TextBlock>
+
+                <Ellipse Grid.Column="2" Width="12" Height="12" Margin="0,0,10,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="#666"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsMonitoring}" Value="True">
+                                    <Setter Property="Fill" Value="#4EC9B0"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
